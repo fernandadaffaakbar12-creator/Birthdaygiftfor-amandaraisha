@@ -2672,3 +2672,35 @@ body {
         border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
     }
 }
+/* =========================================
+   Custom Titles for Gallery
+========================================= */
+.title-little-things {
+    font-size: 2em;
+    display: inline-block;
+    padding: 20px 35px;
+    margin-bottom: -15px;
+    white-space: nowrap;
+}
+
+.title-i-know {
+    font-size: 1.2em;
+    display: inline-block;
+    padding: 15px 30px;
+    opacity: 0.9;
+    transform: translateX(40px);
+    color: #5a4500;
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .title-little-things {
+        font-size: 1.5em;
+        padding: 15px 25px;
+    }
+    .title-i-know {
+        font-size: 1em;
+        padding: 10px 20px;
+        transform: translateX(20px);
+    }
+}
