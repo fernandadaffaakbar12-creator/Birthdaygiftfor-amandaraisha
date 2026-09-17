@@ -2,167 +2,237 @@
 // 0. ANIMASI LOADING "I LOVE YOU" MEMBENTUK HATI
 // ==========================================
 (function () {
-    const PARTICLE_COUNT = 80;
-    const LOVE_TEXTS = ['I love you', 'i love u', 'love', 'ily', '♡', 'luv u', 'sayang', 'cinta'];
+    function initMiniGame() {
+        const gameArea = document.getElementById('game-area');
+        const player = document.getElementById('player-obj');
+        const miniGameScreen = document.getElementById('mini-game-screen');
+        const progressFill = document.getElementById('game-progress-fill');
+        const safePath = document.getElementById('safe-path');
+        const sparkleContainer = gameArea ? gameArea.querySelector('.track-sparkles') : null;
 
-    // Parametric heart shape formula
-    function heartX(t) {
-        return 16 * Math.pow(Math.sin(t), 3);
-    }
-    function heartY(t) {
-        return -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
-    }
+        if (!gameArea || !player || !miniGameScreen || !safePath) return;
 
-    function mulaiAnimasiLoading() {
-        const container = document.getElementById('love-particles-container');
-        const loadingScreen = document.getElementById('love-loading-screen');
-        const tapText = document.getElementById('loading-tap-text');
-        if (!container || !loadingScreen) return;
+        let isDragging = false;
+        let currentPathLength = 0;
+        let pendingClientX = 0;
+        let pendingClientY = 0;
+        let rafId = null;
+        let sparkleCounter = 0;
 
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const centerX = vw / 2;
-        const centerY = vh / 2;
-        const scale = Math.min(vw, vh) * 0.018;
+        // Offset player: tengah cart
+        const CART_HALF_W = 24;
+        const CART_HALF_H = 26;
 
-        const particles = [];
+        // =============================================
+        // PRE-CACHE: Hitung semua titik path SEKALI saat init
+        // Ini menghindari getPointAtLength() saat drag
+        // =============================================
+        const totalLength = safePath.getTotalLength();
+        const SAMPLES = 200;
+        const cachedPoints = []; // Array of { x, y, len }
 
-        // Generate heart shape target positions (relative to center)
-        const heartPoints = [];
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            const t = (i / PARTICLE_COUNT) * Math.PI * 2;
-            heartPoints.push({
-                x: heartX(t) * scale,
-                y: heartY(t) * scale - 20
-            });
+        for (let i = 0; i <= SAMPLES; i++) {
+            const len = (i / SAMPLES) * totalLength;
+            const pt = safePath.getPointAtLength(len);
+            cachedPoints.push({ x: pt.x, y: pt.y, len: len });
         }
 
-        // Build all particles in a document fragment (single DOM insert)
-        const fragment = document.createDocumentFragment();
+        // Cache monster elements
+        const monsters = gameArea.querySelectorAll('.monster');
 
-        for (let i = 0; i < PARTICLE_COUNT; i++) {
-            const el = document.createElement('span');
-            el.classList.add('love-particle');
-            el.textContent = LOVE_TEXTS[Math.floor(Math.random() * LOVE_TEXTS.length)];
+        // Background particles
+        createBgParticles();
 
-            const fontSize = 8 + Math.random() * 6;
-            el.style.fontSize = fontSize + 'px';
-
-            // All particles start at center, use transform for positioning
-            el.style.left = centerX + 'px';
-            el.style.top = centerY + 'px';
-
-            // Scatter offset from center (bottom area)
-            const scatterX = -centerX + Math.random() * vw;
-            const scatterY = vh * 0.1 + Math.random() * vh * 0.4;
-            const rotation = -30 + Math.random() * 60;
-
-            // Random color
-            const colors = [
-                'rgba(255, 182, 193, 0.9)',
-                'rgba(255, 150, 180, 0.85)',
-                'rgba(255, 200, 220, 0.8)',
-                'rgba(220, 160, 255, 0.7)',
-                'rgba(255, 255, 255, 0.6)',
-                'rgba(255, 130, 170, 0.9)'
-            ];
-            el.style.color = colors[Math.floor(Math.random() * colors.length)];
-
-            fragment.appendChild(el);
-            particles.push({
-                el: el,
-                scatterX: scatterX,
-                scatterY: scatterY,
-                rotation: rotation,
-                heartX: heartPoints[i].x,
-                heartY: heartPoints[i].y
-            });
+        function createBgParticles() {
+            const container = miniGameScreen.querySelector('.game-bg-particles');
+            if (!container) return;
+            for (let i = 0; i < 25; i++) {
+                const p = document.createElement('div');
+                p.classList.add('game-bg-particle');
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top = Math.random() * 100 + '%';
+                p.style.animationDelay = (Math.random() * 6) + 's';
+                p.style.animationDuration = (4 + Math.random() * 4) + 's';
+                p.style.width = (2 + Math.random() * 4) + 'px';
+                p.style.height = p.style.width;
+                container.appendChild(p);
+            }
         }
 
-        container.appendChild(fragment);
+        function createTrackSparkle(pixX, pixY) {
+            if (!sparkleContainer) return;
+            const s = document.createElement('div');
+            s.className = 'track-sparkle';
+            s.style.cssText = 'left:' + (pixX + (Math.random() - 0.5) * 16) + 'px;top:' + (pixY + (Math.random() - 0.5) * 16) + 'px';
+            sparkleContainer.appendChild(s);
+            setTimeout(() => s.remove(), 1500);
+        }
 
-        // Phase 1: Show scattered particles with staggered fade-in
-        requestAnimationFrame(() => {
-            particles.forEach((p, i) => {
-                setTimeout(() => {
-                    p.el.style.transform = 'translate(' + p.scatterX + 'px, ' + p.scatterY + 'px) rotate(' + p.rotation + 'deg)';
-                    p.el.classList.add('scattered');
-                }, 50 + i * 12);
-            });
-        });
+        // Cari titik terdekat dari cached points (SANGAT CEPAT - hanya array loop)
+        function findClosestCached(svgX, svgY) {
+            let bestDist = Infinity;
+            let bestIdx = 0;
 
-        // Phase 2: Float particles upward slightly (1.5s)
-        setTimeout(() => {
-            particles.forEach(p => {
-                const driftX = p.scatterX + (-40 + Math.random() * 80);
-                const driftY = p.scatterY - (20 + Math.random() * 60);
-                p.el.style.transform = 'translate(' + driftX + 'px, ' + driftY + 'px) rotate(' + (p.rotation * 0.5) + 'deg)';
-            });
-        }, 1500);
-
-        // Phase 3: Form the heart shape (3s)
-        setTimeout(() => {
-            particles.forEach((p, i) => {
-                const staggerDelay = (i / PARTICLE_COUNT) * 1000;
-                p.el.style.transitionDuration = '2.5s';
-                p.el.style.transitionDelay = staggerDelay + 'ms';
-
-                setTimeout(() => {
-                    p.el.style.transform = 'translate(' + p.heartX + 'px, ' + p.heartY + 'px) rotate(0deg) scale(1)';
-                    p.el.classList.remove('scattered');
-                    p.el.classList.add('formed');
-                }, 30);
-            });
-        }, 3000);
-
-        // Phase 4: Add glow pulse & sparkles after heart is formed (6.5s)
-        setTimeout(() => {
-            particles.forEach((p, i) => {
-                p.el.classList.add('glow-pulse');
-            });
-
-            buatSparkles(container, heartPoints, centerX, centerY);
-            if (tapText) tapText.classList.add('show');
-        }, 6500);
-
-        // Click/tap to dismiss with planet transition
-        let bisaDismiss = false;
-        setTimeout(() => { bisaDismiss = true; }, 6000);
-        loadingScreen.addEventListener('click', function () {
-            if (!bisaDismiss) return;
-            bisaDismiss = false;
-
-            if (tapText) tapText.classList.remove('show');
-
-            // Phase A: SUCK particles into the center
-            particles.forEach((p) => {
-                p.el.style.transitionDuration = '0.8s';
-                p.el.style.transitionDelay = (Math.random() * 150) + 'ms';
-                p.el.style.transitionTimingFunction = 'cubic-bezier(0.5, 0, 1, 0.5)';
-                p.el.style.transform = 'translate(0px, 0px) scale(0) rotate(180deg)';
-                p.el.style.opacity = '0';
-            });
-
-            // Phase B: Fade out screen
-            setTimeout(() => {
-                loadingScreen.style.transition = 'opacity 1s ease';
-                loadingScreen.style.opacity = '0';
-            }, 800);
-
-            // Phase C: Show PIN screen instead of landing page
-            setTimeout(() => {
-                loadingScreen.style.display = 'none';
-                const pinScreen = document.getElementById('pin-screen');
-                if (pinScreen) {
-                    pinScreen.style.display = 'flex';
-                    // Delay sedikit agar transisi CSS jalan
-                    setTimeout(() => {
-                        pinScreen.classList.add('active');
-                    }, 50);
+            for (let i = 0; i < cachedPoints.length; i++) {
+                const p = cachedPoints[i];
+                const dx = p.x - svgX;
+                const dy = p.y - svgY;
+                const d = dx * dx + dy * dy;
+                if (d < bestDist) {
+                    bestDist = d;
+                    bestIdx = i;
                 }
-            }, 1800);
+            }
+
+            return cachedPoints[bestIdx];
+        }
+
+        // Letakkan player di titik path
+        function placePlayer(svgX, svgY, len) {
+            const rect = gameArea.getBoundingClientRect();
+            const pixX = (svgX / 500) * rect.width;
+            const pixY = (svgY / 250) * rect.height;
+
+            player.style.left = (pixX - CART_HALF_W) + 'px';
+            player.style.top = (pixY - CART_HALF_H) + 'px';
+
+            currentPathLength = len;
+
+            // Progress bar
+            if (progressFill) {
+                progressFill.style.width = ((len / totalLength) * 100) + '%';
+            }
+
+            // Sparkle hanya setiap 3 frame
+            sparkleCounter++;
+            if (sparkleCounter % 3 === 0) {
+                createTrackSparkle(pixX, pixY);
+            }
+
+            return { pixX, pixY };
+        }
+
+        function resetPlayer() {
+            currentPathLength = 0;
+            const p = cachedPoints[0];
+            placePlayer(p.x, p.y, 0);
+            player.style.transform = 'scale(1)';
+            isDragging = false;
+            if (progressFill) progressFill.style.width = '0%';
+            if (navigator.vibrate) navigator.vibrate(200);
+        }
+
+        function checkMonsterCollision(pixX, pixY) {
+            const aRect = gameArea.getBoundingClientRect();
+
+            for (const monster of monsters) {
+                const mRect = monster.getBoundingClientRect();
+                const mx = (mRect.left + mRect.width * 0.5) - aRect.left;
+                const my = (mRect.top + mRect.height * 0.5) - aRect.top;
+                const dx = pixX - mx;
+                const dy = pixY - my;
+
+                if (dx * dx + dy * dy < 324) { // 18^2 = 324
+                    resetPlayer();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkFinish() {
+            if (currentPathLength >= totalLength * 0.95) {
+                isDragging = false;
+                setTimeout(() => {
+                    miniGameScreen.style.transition = 'opacity 1s ease';
+                    miniGameScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        miniGameScreen.style.display = 'none';
+                        const landingPage = document.getElementById('landing-page');
+                        if (landingPage) landingPage.style.display = '';
+                    }, 1000);
+                }, 300);
+                return true;
+            }
+            return false;
+        }
+
+        // Frame update — dipanggil via requestAnimationFrame
+        function frameUpdate() {
+            rafId = null;
+            if (!isDragging) return;
+
+            const rect = gameArea.getBoundingClientRect();
+            // Konversi client coords ke SVG coords
+            const svgX = ((pendingClientX - rect.left) / rect.width) * 500;
+            const svgY = ((pendingClientY - rect.top) / rect.height) * 250;
+
+            // Cari titik terdekat (super cepat, hanya array loop)
+            const closest = findClosestCached(svgX, svgY);
+
+            // Letakkan player
+            const { pixX, pixY } = placePlayer(closest.x, closest.y, closest.len);
+
+            // Cek tabrakan
+            if (checkMonsterCollision(pixX, pixY)) return;
+            checkFinish();
+        }
+
+        // Trigger frame update (throttled via rAF)
+        function scheduleUpdate(clientX, clientY) {
+            pendingClientX = clientX;
+            pendingClientY = clientY;
+            if (!rafId) {
+                rafId = requestAnimationFrame(frameUpdate);
+            }
+        }
+
+        // Inisialisasi posisi awal
+        const startPt = cachedPoints[0];
+        placePlayer(startPt.x, startPt.y, 0);
+
+        // --- Mouse Events ---
+        player.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            player.style.transform = 'scale(1.08)';
+            e.preventDefault();
         });
 
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            scheduleUpdate(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                player.style.transform = 'scale(1)';
+            }
+        });
+
+        // --- Touch Events ---
+        player.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            player.style.transform = 'scale(1.08)';
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const t = e.touches[0];
+            scheduleUpdate(t.clientX, t.clientY);
+        }, { passive: false });
+
+        document.addEventListener('touchend', () => {
+            if (isDragging) {
+                isDragging = false;
+                player.style.transform = 'scale(1)';
+            }
+        });
+    }
+
+    function initPinLogic() {
         // ==========================================
         // PIN VALIDATION LOGIC (Pop-Up Notifikasi)
         // ==========================================
@@ -175,7 +245,7 @@
         const pinPopupClose = document.getElementById('pin-popup-close');
 
         // DEFAULT PIN: Silakan ubah angka ini jika ingin PIN lain
-        const SECRET_PIN = "0404";
+        const SECRET_PIN = "0000";
 
         let pinAttempt = 0;
         let popupTimeout = null;
@@ -296,12 +366,26 @@
                                 closePinPopup();
                                 setTimeout(() => {
                                     const pinScreen = document.getElementById('pin-screen');
+                                    
+                                    // 1. Fade out PIN screen
                                     pinScreen.classList.remove('active');
 
+                                    // 2. Wait for fade out to complete (1 detik)
                                     setTimeout(() => {
                                         pinScreen.style.display = 'none';
-                                        const landingPage = document.getElementById('landing-page');
-                                        if (landingPage) landingPage.style.display = '';
+                                        
+                                        const loadingScreen = document.getElementById('mini-game-screen');
+                                        if (loadingScreen) {
+                                            loadingScreen.style.display = 'flex';
+                                            
+                                            // 3. Jeda sedikit lalu jalankan Fade in Mini Game
+                                            setTimeout(() => {
+                                                loadingScreen.style.opacity = '1';
+                                                
+                                                // 4. Inisialisasi game setelah mulai muncul
+                                                initMiniGame();
+                                            }, 50);
+                                        }
                                     }, 1000);
                                 }, 300);
                             }, 2000);
@@ -311,12 +395,26 @@
                                 closePinPopup();
                                 setTimeout(() => {
                                     const pinScreen = document.getElementById('pin-screen');
+                                    
+                                    // 1. Fade out PIN screen
                                     pinScreen.classList.remove('active');
 
+                                    // 2. Wait for fade out to complete (1 detik)
                                     setTimeout(() => {
                                         pinScreen.style.display = 'none';
-                                        const landingPage = document.getElementById('landing-page');
-                                        if (landingPage) landingPage.style.display = '';
+                                        
+                                        const loadingScreen = document.getElementById('mini-game-screen');
+                                        if (loadingScreen) {
+                                            loadingScreen.style.display = 'flex';
+                                            
+                                            // 3. Jeda sedikit lalu jalankan Fade in Mini Game
+                                            setTimeout(() => {
+                                                loadingScreen.style.opacity = '1';
+                                                
+                                                // 4. Inisialisasi game setelah mulai muncul
+                                                initMiniGame();
+                                            }, 50);
+                                        }
                                     }, 1000);
                                 }, 300);
                             };
@@ -362,9 +460,9 @@
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', mulaiAnimasiLoading);
+        document.addEventListener('DOMContentLoaded', initPinLogic);
     } else {
-        mulaiAnimasiLoading();
+        initPinLogic();
     }
 })();
 

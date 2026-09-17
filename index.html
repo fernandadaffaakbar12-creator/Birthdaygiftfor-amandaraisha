@@ -13,15 +13,17 @@
 
 <body>
     <audio id="bg-music" loop>
-        <source src="audio/Shape-of-My-Heart.mp3" type="audio/mpeg">
+        <source src="audio/Westlife - I Lay My Love on You Lyrics.mp3" type="audio/mpeg">
     </audio>
 
     <div id="music-popup" class="music-popup">
         <p class="now-playing-top">Now Playing</p>
-        <img src="img/beautiful.jpeg" alt="Album Cover" class="album-cover">
+        <img src="img/beautifull.jpg" alt="Album Cover" class="album-cover">
         <div class="music-info">
-            <p class="song-title">Shape Of My Heart</p>
-            <p class="artist-name">Backstreet Boys</p>
+            <div class="song-title-wrapper">
+                <p class="song-title">I Lay My Love On You</p>
+            </div>
+            <p class="artist-name">Westlife</p>
         </div>
         <button id="play-pause-btn" class="play-pause-btn" onclick="toggleMusic()">
             <!-- SVG Pause Icon -->
@@ -45,14 +47,105 @@
 
     <div id="flash-light"></div>
 
-    <!-- Loading Screen: Animasi "I love you" membentuk hati -->
-    <div id="love-loading-screen">
-        <div id="love-particles-container"></div>
-        <p id="loading-tap-text">klik disini</p>
+    <!-- Mini Game Screen -->
+    <div id="mini-game-screen" style="display: none;">
+        <!-- Animated background particles -->
+        <div class="game-bg-particles"></div>
+
+        <div class="game-glass-panel">
+            <div class="game-title-wrapper">
+                <h2 class="aesthetic-font game-title-text">Mini Game!</h2>
+            </div>
+            <p class="game-subtitle">Tolong bantu anterin bouquetnya ke nailong<br><span class="game-subtitle-warn">⚠️
+                    Hindari monster & jangan keluar rel!</span></p>
+
+            <div id="game-area">
+                <!-- SVG Rail Track - HORIZONTAL left to right -->
+                <svg id="game-svg" viewBox="0 0 500 250" preserveAspectRatio="none">
+                    <defs>
+                        <filter id="rail-glow">
+                            <feGaussianBlur stdDeviation="2" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+
+                    <!-- Outer glow of rail -->
+                    <path id="rail-glow-path"
+                        d="M 15,125 C 60,30 120,30 165,125 C 210,220 270,220 315,125 C 360,30 420,30 485,125"
+                        fill="none" stroke="rgba(180,140,60,0.15)" stroke-width="36" stroke-linecap="round"
+                        stroke-linejoin="round" />
+
+                    <!-- Main rail (safe path) - winding S-curve horizontal -->
+                    <path id="safe-path"
+                        d="M 15,125 C 60,30 120,30 165,125 C 210,220 270,220 315,125 C 360,30 420,30 485,125"
+                        fill="none" stroke="#8B6914" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"
+                        filter="url(#rail-glow)" />
+
+                    <!-- Inner rail line (lighter) for railroad effect -->
+                    <path d="M 15,125 C 60,30 120,30 165,125 C 210,220 270,220 315,125 C 360,30 420,30 485,125"
+                        fill="none" stroke="#C4A23A" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+
+                    <!-- Center dashed line (rail ties) -->
+                    <path d="M 15,125 C 60,30 120,30 165,125 C 210,220 270,220 315,125 C 360,30 420,30 485,125"
+                        fill="none" stroke="#5a4500" stroke-width="2" stroke-dasharray="8,12" stroke-linecap="round" />
+
+                    <!-- Decorative rail ties (crossbars) along the path - vertical lines -->
+                    <g class="rail-ties" opacity="0.3">
+                        <line x1="15" y1="115" x2="15" y2="135" stroke="#5a4500" stroke-width="2" />
+                        <line x1="45" y1="75" x2="45" y2="95" stroke="#5a4500" stroke-width="2" />
+                        <line x1="75" y1="45" x2="75" y2="65" stroke="#5a4500" stroke-width="2" />
+                        <line x1="105" y1="35" x2="105" y2="55" stroke="#5a4500" stroke-width="2" />
+                        <line x1="135" y1="65" x2="135" y2="85" stroke="#5a4500" stroke-width="2" />
+                        <line x1="165" y1="115" x2="165" y2="135" stroke="#5a4500" stroke-width="2" />
+                        <line x1="195" y1="165" x2="195" y2="185" stroke="#5a4500" stroke-width="2" />
+                        <line x1="225" y1="200" x2="225" y2="220" stroke="#5a4500" stroke-width="2" />
+                        <line x1="255" y1="210" x2="255" y2="230" stroke="#5a4500" stroke-width="2" />
+                        <line x1="285" y1="185" x2="285" y2="205" stroke="#5a4500" stroke-width="2" />
+                        <line x1="315" y1="115" x2="315" y2="135" stroke="#5a4500" stroke-width="2" />
+                        <line x1="345" y1="65" x2="345" y2="85" stroke="#5a4500" stroke-width="2" />
+                        <line x1="375" y1="35" x2="375" y2="55" stroke="#5a4500" stroke-width="2" />
+                        <line x1="405" y1="35" x2="405" y2="55" stroke="#5a4500" stroke-width="2" />
+                        <line x1="435" y1="55" x2="435" y2="75" stroke="#5a4500" stroke-width="2" />
+                        <line x1="465" y1="95" x2="465" y2="115" stroke="#5a4500" stroke-width="2" />
+                        <line x1="485" y1="115" x2="485" y2="135" stroke="#5a4500" stroke-width="2" />
+                    </g>
+                </svg>
+
+                <!-- Track sparkle particles -->
+                <div class="track-sparkles"></div>
+
+                <!-- Pemain - Tongkang Kayu dengan Bouquet -->
+                <div id="player-obj">
+                    <span class="player-glow"></span>
+                    <div class="cart-body">
+                        <img src="img/bouquet.png" alt="Bouquet" class="cart-bouquet-img">
+                    </div>
+                    <div class="cart-base"></div>
+                    <div class="cart-wheel cart-wheel-l"></div>
+                    <div class="cart-wheel cart-wheel-r"></div>
+                </div>
+
+                <!-- Monster 1 & 2 -->
+                <div id="monster-1" class="monster"><span class="monster-danger-zone"></span>👾</div>
+                <div id="monster-2" class="monster"><span class="monster-danger-zone"></span>👾</div>
+
+                <!-- Garis Akhir (Dinosaurus) -->
+                <div id="finish-line">
+                    <span class="finish-pulse"></span>
+                    <img src="img/dino.png" alt="Dino" class="finish-img">
+                </div>
+            </div>
+
+            <!-- Progress indicator -->
+            <div class="game-progress-bar">
+                <div class="game-progress-fill" id="game-progress-fill"></div>
+            </div>
+            <p class="game-hint-text">✨ Seret tongkang pelan-pelan di atas rel ke kanan ✨</p>
+        </div>
     </div>
 
     <!-- PIN Screen -->
-    <div id="pin-screen" style="display: none;">
+    <div id="pin-screen" style="display: flex;" class="active">
         <div class="pin-container glass-panel">
             <h2>Enter PIN</h2>
             <p style="margin-bottom: 2px;">passwordnya tanggal + bulan jadian kita yaa</p>
@@ -74,7 +167,7 @@
     <div id="landing-page" style="display: none;">
         <div class="bouquet-container" onclick="bukaKado()">
             <img src="img/BouquetBunga.png" alt="BouquetBunga" class="bouquet-img">
-            <p class="click-text">for u my luv<br>(pencet nailong nya) </p>
+            <p class="click-text">nailong mau kasih bouqet ini buat kamu<br>(pencet nailong nya) </p>
         </div>
     </div>
 
@@ -110,11 +203,12 @@
         </section>
 
         <section class="slide photo-panel show-on-scroll">
-            <h2 class="aesthetic-font"
-                style="line-height: 0.8; margin-bottom: -15px; position: relative; top: 15px; color: #e6a800;">
-                <span style="font-size: 2em; display: block;">The little things</span>
-                <span
-                    style="font-size: 1.2em; display: block; opacity: 0.9; transform: translateX(40px); color: #5a4500;">i
+            <h2 class="aesthetic-font" style="line-height: 0.8; color: #e6a800; top: 15px;">
+                <span class="liquid-glass-bg"
+                    style="font-size: 2em; display: inline-block; padding: 20px 35px; margin-bottom: -15px;">The little
+                    things</span>
+                <span class="liquid-glass-bg"
+                    style="font-size: 1.2em; display: inline-block; padding: 15px 30px; opacity: 0.9; transform: translateX(40px); color: #5a4500;">i
                     know about
                     you</span>
             </h2>
@@ -147,7 +241,7 @@
                     </div>
 
                     <div class="planet-card item5" data-caption="Marsel">
-                        <img src="img/favorite-person.jpeg" alt="Person">
+                        <img src="img/favorite-person.jpg" alt="Person">
                         <p class="planet-caption">Your favorite person</p>
                     </div>
 
@@ -156,35 +250,37 @@
         </section>
 
         <section class="slide photo-panel show-on-scroll">
-            <h2 class="aesthetic-font" style="line-height: 0.8; margin-bottom: 35px; color: #e6a800;">
-                <span style="font-size: 2em; display: block;">Core Memories</span>
-                <span
-                    style="font-size: 1.2em; display: block; opacity: 0.9; transform: translateX(40px); color: #5a4500;">of
+            <h2 class="aesthetic-font" style="line-height: 0.8; color: #e6a800;">
+                <span class="liquid-glass-bg"
+                    style="font-size: 2em; display: inline-block; padding: 20px 35px; margin-bottom: -15px;">Core
+                    Memories</span>
+                <span class="liquid-glass-bg"
+                    style="font-size: 1.2em; display: inline-block; padding: 15px 30px; opacity: 0.9; transform: translateX(40px); color: #5a4500;">of
                     Us</span>
             </h2>
             <div class="gallery-scroll">
                 <div class="scratch-card">
-                    <img src="img/1.jpeg" alt="Kenangan 1">
+                    <img src="img/1.jpg" alt="Kenangan 1">
                     <canvas class="scratch-canvas"></canvas>
                 </div>
                 <div class="scratch-card">
-                    <img src="img/2.jpeg" alt="Kenangan 2">
+                    <img src="img/2.jpg" alt="Kenangan 2">
                     <canvas class="scratch-canvas"></canvas>
                 </div>
                 <div class="scratch-card">
-                    <img src="img/3.jpeg" alt="Kenangan 3">
+                    <img src="img/3.jpg" alt="Kenangan 3">
                     <canvas class="scratch-canvas"></canvas>
                 </div>
                 <div class="scratch-card">
-                    <img src="img/4.jpeg" alt="Kenangan 4">
+                    <img src="img/4.jpg" alt="Kenangan 4">
                     <canvas class="scratch-canvas"></canvas>
                 </div>
                 <div class="scratch-card">
-                    <img src="img/5.jpeg" alt="Kenangan 5">
+                    <img src="img/5.jpg" alt="Kenangan 5">
                     <canvas class="scratch-canvas"></canvas>
                 </div>
                 <div class="scratch-card">
-                    <img src="img/6.jpeg" alt="Kenangan 6">
+                    <img src="img/6.jpg" alt="Kenangan 6">
                     <canvas class="scratch-canvas"></canvas>
                 </div>
             </div>
@@ -199,19 +295,19 @@
         <section class="slide photo-panel show-on-scroll">
             <div class="polaroid-grid">
                 <div class="polaroid">
-                    <img src="img/you.jpeg" alt="Foto Pribadi 1">
+                    <img src="img/you.jpg" alt="Foto Pribadi 1">
                     <p class="caption">You</p>
                 </div>
                 <div class="polaroid">
-                    <img src="img/are.jpeg" alt="Foto Pribadi 2">
+                    <img src="img/are.jpg" alt="Foto Pribadi 2">
                     <p class="caption">Are</p>
                 </div>
                 <div class="polaroid">
-                    <img src="img/so.jpeg" alt="Foto Pribadi 3">
+                    <img src="img/so.jpg" alt="Foto Pribadi 3">
                     <p class="caption">So</p>
                 </div>
                 <div class="polaroid">
-                    <img src="img/beautiful.jpeg" alt="Foto Pribadi 4">
+                    <img src="img/beautifull.jpg" alt="Foto Pribadi 4">
                     <p class="caption">Beautiful</p>
                 </div>
             </div>
@@ -242,6 +338,10 @@
 
         <!-- HALAMAN TIUP LILIN (Full Screen Overlay) -->
         <div id="candle-page" class="candle-page">
+            <!-- Astronaut Background -->
+            <img src="img/astronaut.png" alt="Astronaut" class="astronaut-bg">
+            <img src="img/astronaut2.png" alt="Astronaut Rocket" class="astronaut-bg-2">
+
             <!-- Tombol Kembali -->
             <button id="btn-back-candle" class="btn-back-candle" onclick="tutupHalamanLilin()">← Kembali</button>
 
