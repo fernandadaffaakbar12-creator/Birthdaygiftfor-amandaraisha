@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // 0. ANIMASI LOADING "I LOVE YOU" MEMBENTUK HATI
 // ==========================================
 (function () {
@@ -245,7 +245,7 @@
         const pinPopupClose = document.getElementById('pin-popup-close');
 
         // DEFAULT PIN: Silakan ubah angka ini jika ingin PIN lain
-        const SECRET_PIN = "0000";
+        const SECRET_PIN = "1009";
 
         let pinAttempt = 0;
         let popupTimeout = null;
@@ -357,7 +357,7 @@
                         if (pinInput.value === SECRET_PIN) {
                             // PIN BENAR
                             showPinPopup({
-                                message: 'Valid!\nLanjut ya sayang~',
+                                message: 'Valid!\nLanjut yaa~',
                                 buttonText: 'Lanjut 💕'
                             }, true);
 
@@ -366,22 +366,22 @@
                                 closePinPopup();
                                 setTimeout(() => {
                                     const pinScreen = document.getElementById('pin-screen');
-                                    
+
                                     // 1. Fade out PIN screen
                                     pinScreen.classList.remove('active');
 
                                     // 2. Wait for fade out to complete (1 detik)
                                     setTimeout(() => {
                                         pinScreen.style.display = 'none';
-                                        
+
                                         const loadingScreen = document.getElementById('mini-game-screen');
                                         if (loadingScreen) {
                                             loadingScreen.style.display = 'flex';
-                                            
+
                                             // 3. Jeda sedikit lalu jalankan Fade in Mini Game
                                             setTimeout(() => {
                                                 loadingScreen.style.opacity = '1';
-                                                
+
                                                 // 4. Inisialisasi game setelah mulai muncul
                                                 initMiniGame();
                                             }, 50);
@@ -395,22 +395,22 @@
                                 closePinPopup();
                                 setTimeout(() => {
                                     const pinScreen = document.getElementById('pin-screen');
-                                    
+
                                     // 1. Fade out PIN screen
                                     pinScreen.classList.remove('active');
 
                                     // 2. Wait for fade out to complete (1 detik)
                                     setTimeout(() => {
                                         pinScreen.style.display = 'none';
-                                        
+
                                         const loadingScreen = document.getElementById('mini-game-screen');
                                         if (loadingScreen) {
                                             loadingScreen.style.display = 'flex';
-                                            
+
                                             // 3. Jeda sedikit lalu jalankan Fade in Mini Game
                                             setTimeout(() => {
                                                 loadingScreen.style.opacity = '1';
-                                                
+
                                                 // 4. Inisialisasi game setelah mulai muncul
                                                 initMiniGame();
                                             }, 50);
@@ -869,7 +869,7 @@ document.addEventListener('DOMContentLoaded', () => {
             canvas.width = 220;
             canvas.height = Math.round(220 * 16 / 9);
 
-            ctx.fillStyle = '#FFF8E1';
+            ctx.fillStyle = '#FFF0F5';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Glitter emas kecil-kecil
@@ -881,15 +881,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     Math.random() * 1.8 + 0.3,
                     0, Math.PI * 2
                 );
-                const goldColors = [
-                    'rgba(255, 215, 0, 0.9)',
-                    'rgba(218, 165, 32, 0.85)',
-                    'rgba(255, 193, 7, 0.8)',
-                    'rgba(253, 216, 53, 0.75)',
-                    'rgba(255, 235, 59, 0.7)',
-                    'rgba(245, 127, 23, 0.6)'
+                const pinkColors = [
+                    'rgba(255, 105, 180, 0.9)',
+                    'rgba(255, 20, 147, 0.85)',
+                    'rgba(255, 182, 193, 0.8)',
+                    'rgba(255, 192, 203, 0.75)',
+                    'rgba(219, 112, 147, 0.7)',
+                    'rgba(199, 21, 133, 0.6)'
                 ];
-                ctx.fillStyle = goldColors[Math.floor(Math.random() * goldColors.length)];
+                ctx.fillStyle = pinkColors[Math.floor(Math.random() * pinkColors.length)];
                 ctx.fill();
             }
 
